@@ -2,14 +2,22 @@ import apriltag
 import numpy as np
 import cv2 as cv
 import time
+import util
 
-DEBUG = False
+camMtx = util.readFromFile("newcameramtx.npy")
+camMtxDetectorParam = [camMtx[0][0], camMtx[0][2], camMtx[1][1], camMtx[1][2]]
+dist = util.readFromFile("dist.npy")
 
-options: apriltag.DetectorOptions = apriltag.DetectorOptions(families="tag16h5", quad_decimate=0)
+options: apriltag.DetectorOptions = apriltag.DetectorOptions(families="tag16h5", quad_decimate=0, nthreads=4)
 detector: apriltag.Detector = apriltag.Detector(options)
 
 detections, img2 = None, None
 detect: apriltag.Detection
+
+def callPoseDetection(detection: apriltag.Detection):
+    return detector.detection_pose(detection=detection, camera_params=camMtxDetectorParam, tag_size=8)
+
+DEBUG = False
 # TEST
 if DEBUG:
     imagePath = "test.jpg"
@@ -22,7 +30,7 @@ else:
     if not cap.isOpened():
         print("Cannot open camera")
         exit()
-    cap.set(cv.CAP_PROP_FRAME_WIDTH, 1080)
+    cap.set(cv.CAP_PROP_FRAME_WIDTH, 1280)
     cap.set(cv.CAP_PROP_FRAME_HEIGHT, 720)
     cap.set(cv.CAP_PROP_FPS, 90)
 
@@ -39,9 +47,11 @@ while True:
                 # print("rejected:", detection.tag_id, "dec_mar:", detection.decision_margin)
                 continue
             detected += 1
+            print(callPoseDetection(detection=detection))
             # print("detected:", detection.tostring())
         print("[INFO]", detected, "total AprilTags detected")
         print("FPS: ", round(1.0 / (time.time() - start_time)))
+
         cv.imshow("gray", gray)
         cv.imshow("crop", cropped)
     else:
