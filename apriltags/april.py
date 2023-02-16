@@ -14,8 +14,8 @@ detector: apriltag.Detector = apriltag.Detector(options)
 detections, img2 = None, None
 detect: apriltag.Detection
 
-def callPoseDetection(detection: apriltag.Detection):
-    return detector.detection_pose(detection=detection, camera_params=camMtxDetectorParam, tag_size=8)
+def callPoseDetection(detection: apriltag.Detection): # NOTE TO SELF: tag_size is in METERS, and is measured NOT INCLUDING the border (so 6 inches in our case)
+    return detector.detection_pose(detection=detection, camera_params=camMtxDetectorParam, tag_size=0.15244)
 
 DEBUG = False
 # TEST
