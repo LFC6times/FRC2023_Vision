@@ -13,7 +13,10 @@ objp[:,:2] = np.mgrid[0:7,0:7].T.reshape(-1,2)
 # Arrays to store object points and image points from all the images.
 objpoints = [] # 3d point in real world space
 imgpoints = [] # 2d points in image plane.
-images = glob.glob('/home/addison/FRC2023_Vision/apriltags/calibImgs/*.jpg')
+
+# test_path = '/home/addison/FRC2023_Vision/apriltags/calibImgs/*.jpg'
+test_path = "C:/Users/astro/OneDrive/Documents/FRC2023_Vision/apriltags/calibImgs/*.jpg"
+images = glob.glob(test_path)
 print(len(images))
 for i, fname in enumerate(images):
     img = cv.imread(fname)
@@ -30,8 +33,8 @@ for i, fname in enumerate(images):
         cv.imshow('img' + str(i), img)
         cv.waitKey(500)
 ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
-img = cv.imread('/home/addison/FRC2023_Vision/apriltags/calibImgs/test_1.jpg')
-h,  w = img.shape[:2]
+# img = cv.imread('/home/addison/FRC2023_Vision/apriltags/calibImgs/test_1.jpg')
+h, w = (720, 1280) # img.shape[:2]
 newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
 
 # undistort
@@ -43,7 +46,11 @@ dst = dst[y:y+h, x:x+w]
 cv.imwrite('calibresult_remap.png', dst)
 cv.destroyAllWindows()
 
+util.writeToFile(mtx, "mtx.npy")
+util.writeToFile(mapx, "mapx.npy")
+util.writeToFile(mapy, "mapy.npy")
 util.writeToFile(newcameramtx, "newcameramtx.npy")
+util.writeToFile(roi, "roi.npy")
 util.writeToFile(dist, "dist.npy")
 
 print(newcameramtx.shape)
