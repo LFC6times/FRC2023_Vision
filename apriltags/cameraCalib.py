@@ -14,8 +14,8 @@ objp[:,:2] = np.mgrid[0:7,0:7].T.reshape(-1,2)
 objpoints = [] # 3d point in real world space
 imgpoints = [] # 2d points in image plane.
 
-# test_path = '/home/addison/FRC2023_Vision/apriltags/calibImgs/*.jpg'
-test_path = "C:/Users/astro/OneDrive/Documents/FRC2023_Vision/apriltags/calibImgs/*.jpg"
+test_path = '/home/addison/FRC2023_Vision/apriltags/calibImgs/*.jpg'
+#test_path = "C:/Users/astro/OneDrive/Documents/FRC2023_Vision/apriltags/calibImgs/*.jpg"
 images = glob.glob(test_path)
 print(len(images))
 for i, fname in enumerate(images):
@@ -53,6 +53,8 @@ util.writeToFile(newcameramtx, "newcameramtx.npy")
 util.writeToFile(roi, "roi.npy")
 util.writeToFile(dist, "dist.npy")
 
+print(mapx)
+print(mapy)
 print(newcameramtx.shape)
 print(newcameramtx[0])
 print(newcameramtx[1])

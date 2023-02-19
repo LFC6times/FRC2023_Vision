@@ -1,51 +1,41 @@
-import dearpygui.dearpygui as dpg
-import util
 import cv2 as cv
 import numpy as np
+import glob
+import dt_apriltags as apriltag
 
-camMtx = util.readFromFile("newcameramtx.npy")
-# camMtxDetectorParam = [camMtx[0][0], camMtx[0][2], camMtx[1][1], camMtx[1][2]]
-dist = util.readFromFile("dist.npy")
-roi = util.readFromFile("roi.npy")
-x, y, w, h = roi
+detector: apriltag.Detector = apriltag.Detector(families="tag16h5", quad_decimate=0, nthreads=4)
 
-# undistort
-mapx, mapy = (util.readFromFile("mapx.npy"), util.readFromFile("mapy.npy"))
+detections, img2 = None, None
+detect: apriltag.Detection
 
-cap = cv.VideoCapture(0)
-cap.set(cv.CAP_PROP_FRAME_WIDTH, 1280)
-cap.set(cv.CAP_PROP_FRAME_HEIGHT, 720)
-# cap.set(cv.CAP_PROP_FPS, 90)
+test_path = '/home/addison/FRC2023_Vision/apriltags/apriltags_test_imgs/*.jpg'
+#test_path = "C:/Users/astro/OneDrive/Documents/FRC2023_Vision/apriltags/apriltags_test_imgs/*.jpg"
+images = glob.glob(test_path)
+print(len(images))
 
-fx, fy, cx, cy = 0, 0, 0, 0
-oldfx, oldfy, oldcx, oldc = fx, fy, cx, cy
+def metersToFeet(meters):
+    return meters * 3.2808399
 
-def main():
-    dpg.create_context()
-    #create viewport
-    dpg.create_viewport(title='Team 3952', width=720, height=480)
-    dpg.set_viewport_vsync(True)
-    dpg.setup_dearpygui()
-    dpg.set_global_font_scale(3)
+for i, fname in enumerate(images, start=1):
+    img = cv.imread(fname)
+    gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    # original: [307, 307, 640, 360]
+    detections = detector.detect(gray, True, [307, 307, 640, 360], 0.15244) # tag_size in meters, and does not include the solid border, so 6in -> m is ~0.15244
+    detected = 0
+    detection: apriltag.Detection
+    for idx, detection in enumerate(detections):
+        if detection.tag_id < 1 or detection.tag_id > 9 or detection.decision_margin < 20:
+            # print("rejected:", detection.tag_id, "dec_mar:", detection.decision_margin)
+            continue
+        detected += 1
+        P = [
+            [1, 0, 0],
+            [0, -1, 0],
+            [0, 0, -1]
+        ]
+        pose = P @ detection.pose_R @ (-1 * detection.pose_t)
+        print(metersToFeet(pose[0][0]), metersToFeet(pose[1][0]), metersToFeet(pose[2][0]))
+        # print("detected:", detection.__str__())
+    print("[INFO]", detected, "total AprilTags detected in frame", i)
 
-    with dpg.window(tag="Window1"):
-        dpg.set_primary_window("Window1", True)
-    
-    with dpg.window(tag="CalibWin"):
-        dpg.add_input_text(label="fx", tag="fx")
-        dpg.add_input_text(label="fy", tag="fy")
-        dpg.add_input_text(label="cx", tag="cx")
-        dpg.add_input_text(label="cy", tag="cy")
-        
-main()
-
-while True:
-    ret, frame = cap.read()
-    gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-    dst = cv.remap(frame, mapx, mapy, cv.INTER_LINEAR)
-    dst = dst[y:y+h, x:x+w]
-    cv.imshow("remapped", dst)
-    if cv.waitKey(1) & 0xFF == ord('q'):
-        break
-cap.release()
 cv.destroyAllWindows()
